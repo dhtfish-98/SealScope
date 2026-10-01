@@ -1,0 +1,37 @@
+[build-system]
+requires = ["setuptools>=64"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "sealscope"
+version = "0.2.0"
+description = "Structural audit of Mach-O signing metadata, declared entitlements and hardening settings. Does not verify cryptographic signatures or establish OS-granted permissions."
+readme = "README.md"
+requires-python = ">=3.9"
+license = { text = "MIT" }
+authors = [{ name = "bitfish886" }]
+keywords = ["macho", "macos", "ios", "code-signing", "entitlements",
+            "hardened-runtime", "security", "audit"]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Topic :: Security",
+    "Operating System :: MacOS :: MacOS X",
+    "Intended Audience :: Developers",
+]
+
+# No runtime dependencies: everything is parsed with the standard library, so the
+# tool runs anywhere Python does — including inside a minimal CI image.
+dependencies = []
+
+[project.optional-dependencies]
+dev = ["pytest>=7.0"]
+
+[project.scripts]
+sealscope = "sealscope.console:launch"
+
+[tool.setuptools.packages.find]
+include = ["sealscope*"]
+
+[tool.pytest.ini_options]
+testpaths = ["checks"]
