@@ -48,3 +48,14 @@ Parsing metadata does not verify a CMS signature, certificate chain or the
 permissions actually granted by the operating system. Those baseline boundaries
 remain unchanged. See `guides/VERIFICATION.md` for earlier verification context,
 `VALIDATION.md` for this rewrite's checks, and `ORIGIN.md` plus `LICENSE` for lineage.
+
+
+## Current maintenance record
+
+The current package maintenance name is **dhtfish98**. This package author entry records the present maintenance period. Earlier package/release metadata and historical source-lineage records may retain `bitfish886`; those records are preserved for their original publication periods.
+
+Upstream attribution, third-party notices and licenses remain unchanged. This metadata update does not claim exclusive authorship of inherited material, alter runtime or tests, or change the package version.
+
+Previously prepared changes remain unpublished and are not included in this current public tree.
+
+Actual task authorization, any effect of safeguards on that task, and CVP application eligibility remain **OPEN**. Package construction and existing engineering evidence do not establish CVP approval.

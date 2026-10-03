@@ -9,7 +9,7 @@ description = "Structural audit of Mach-O signing metadata, declared entitlement
 readme = "项目文档/README.md"
 requires-python = ">=3.9"
 license = { text = "MIT" }
-authors = [{ name = "bitfish886" }]
+authors = [{ name = "dhtfish98" }]
 keywords = ["macho", "macos", "ios", "code-signing", "entitlements",
             "hardened-runtime", "security", "audit"]
 classifiers = [
