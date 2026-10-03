@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 name = "sealscope"
 version = "0.2.0"
 description = "Structural audit of Mach-O signing metadata, declared entitlements and hardening settings. Does not verify cryptographic signatures or establish OS-granted permissions."
-readme = "README.md"
+readme = "项目文档/README.md"
 requires-python = ">=3.9"
 license = { text = "MIT" }
 authors = [{ name = "bitfish886" }]
@@ -35,3 +35,6 @@ include = ["sealscope*"]
 
 [tool.pytest.ini_options]
 testpaths = ["checks"]
+
+[tool.setuptools]
+license-files = ["项目文档/LICENSE"]

@@ -1,0 +1,37 @@
+{
+  "schema": "project-build-layout.v1",
+  "project": "SealScope",
+  "author": "dhtfish98",
+  "kind": "python",
+  "base_public_commit": "e9122a680d315c171b50e6fdd8dba8b344b413ff",
+  "restored_inputs": [
+    {
+      "original": "LICENSE",
+      "stored": "项目文档/LICENSE",
+      "sha256": "dbc0575c7d1eeddd888703b89e469f17441ac9afd502ec38388685d49c37a369"
+    },
+    {
+      "original": "ORIGIN.md",
+      "stored": "项目文档/ORIGIN.md",
+      "sha256": "6c3cab297a3c39c0f16459ffea1fa6228d2331096a0d4d52312d2fcd5609ed23"
+    },
+    {
+      "original": "README.md",
+      "stored": "项目文档/README.md",
+      "sha256": "69129f0adba6140c36bd040133f859ae2ae70ea559561fc4e883a45617d51b76"
+    },
+    {
+      "original": "VALIDATION.md",
+      "stored": "项目文档/VALIDATION.md",
+      "sha256": "6af913e102d0ddb093f5d5ca3c689b6471d627164b04069e514654f37a382cb4"
+    },
+    {
+      "original": "guides/VERIFICATION.md",
+      "stored": "项目文档/guides/VERIFICATION.md",
+      "sha256": "fa7931376bf9e0159fd92d3712133d02875cd4a6fcc04989d94571e215be802b"
+    }
+  ],
+  "platform_entries": [
+    ".github/SECURITY.md"
+  ]
+}
