@@ -8,7 +8,7 @@ over-reads on such input is a bug worth reporting.
 ## Reporting
 
 Use GitHub's [private vulnerability
-reporting](https://github.com/dhtfish988/sealscope/security/advisories/new) for
+reporting](https://github.com/dhtfish-98/SealScope/security/advisories/new) for
 anything that could affect someone running the tool against a file they did not
 create. Ordinary correctness bugs — a mismatched rule, a wrong finding — are fine as
 a normal GitHub issue.
