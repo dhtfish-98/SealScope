@@ -26,7 +26,7 @@ The exit statuses remain 0 for a completed review below the requested threshold,
 from sealscope import inspect_file, inspect_bundle
 
 review = inspect_file("/usr/bin/otool")
-for observation in review.seal_findings:
+for observation in review.observations:
     print(observation.seal_severity, observation.seal_title)
 
 bundle = inspect_bundle("Example.app")
@@ -52,10 +52,10 @@ remain unchanged. See `guides/VERIFICATION.md` for earlier verification context,
 
 ## Current maintenance record
 
-The current package maintenance name is **dhtfish98**. This package author entry records the present maintenance period. Earlier package/release metadata and historical source-lineage records may retain `bitfish886`; those records are preserved for their original publication periods.
+The current package version is **0.2.1** and its maintenance name is **dhtfish98**. This package author entry records the present maintenance period. Earlier package/release metadata and historical source-lineage records may retain `bitfish886`; those records are preserved for their original publication periods.
 
-Upstream attribution, third-party notices and licenses remain unchanged. This metadata update does not claim exclusive authorship of inherited material, alter runtime or tests, or change the package version.
+This release rejects Mach-O slices, embedded signature blobs and CodeDirectory fields that claim bytes outside their declared ranges. The rejection is a structural check on local input; it does not establish signer trust, signature validity or OS-granted permissions. See `VALIDATION.md` for matching synthetic tests and build evidence.
 
-Previously prepared changes remain unpublished and are not included in this current public tree.
+Upstream attribution, third-party notices and licenses remain unchanged. The current implementation was revised on the public 0.2.0 baseline; an earlier unpublished package was not reused.
 
 Actual task authorization, any effect of safeguards on that task, and CVP application eligibility remain **OPEN**. Package construction and existing engineering evidence do not establish CVP approval.

@@ -181,13 +181,38 @@ class SigningEnvelope:
         return seal_cds + list(record.seal_alternates)
 
 def seal_parse_code_directory(payload: bytes, cursor: int, seal_length: int) -> DigestDirectory:
+    if seal_length < 44:
+        raise EnvelopeFault('CodeDirectory is shorter than its fixed header')
+    seal_need(payload, cursor, seal_length, 'CodeDirectory')
     seal_need(payload, cursor, 44, 'CodeDirectory fixed header')
     seal_version, seal_flags, seal_hash_off, seal_ident_off, seal_n_special, seal_n_code, seal_code_limit, seal_hash_size, seal_hash_type, seal_platform, seal_page_shift, seal_spare2 = seal_struct.unpack_from('>IIIIIIIBBBBI', payload, cursor + 8)
     seal_end = cursor + seal_length
+    seal_tail_size = ((4 if seal_version >= 0x20100 else 0)
+                      + (4 if seal_version >= 0x20200 else 0)
+                      + (12 if seal_version >= 0x20300 else 0)
+                      + (24 if seal_version >= 0x20400 else 0)
+                      + (8 if seal_version >= 0x20500 else 0)
+                      + (12 if seal_version >= 0x20600 else 0))
+    seal_header_end = 44 + seal_tail_size
+    if seal_length < seal_header_end:
+        raise EnvelopeFault('CodeDirectory is shorter than its declared version header')
+    if seal_hash_off > seal_length:
+        raise EnvelopeFault('CodeDirectory hash offset is outside its declared length')
+    if seal_n_special or seal_n_code:
+        if not seal_hash_size or not seal_hash_off:
+            raise EnvelopeFault('CodeDirectory declares hash slots without a hash table')
+        if seal_n_special > seal_hash_off // seal_hash_size or seal_n_code > (seal_length - seal_hash_off) // seal_hash_size:
+            raise EnvelopeFault('CodeDirectory hash slots exceed its declared length')
+        if seal_hash_off - seal_n_special * seal_hash_size < seal_header_end:
+            raise EnvelopeFault('CodeDirectory hash slots overlap its version header')
     seal_ident = ''
-    if 0 < seal_ident_off < seal_length:
+    if seal_ident_off:
+        if seal_ident_off < seal_header_end or seal_ident_off >= seal_length:
+            raise EnvelopeFault('CodeDirectory identifier offset is outside its data area')
         seal_z = payload.find(b'\x00', cursor + seal_ident_off, seal_end)
-        seal_ident = payload[cursor + seal_ident_off:seal_z if seal_z >= 0 else seal_end].decode('utf-8', 'replace')
+        if seal_z < 0:
+            raise EnvelopeFault('CodeDirectory identifier is not terminated inside its declared length')
+        seal_ident = payload[cursor + seal_ident_off:seal_z].decode('utf-8', 'replace')
     seal_cd = DigestDirectory(seal_version=seal_version, seal_flags=seal_flags, seal_identifier=seal_ident, seal_team_id=None, seal_hash_type=seal_hash_type, seal_hash_size=seal_hash_size, seal_page_size=1 << seal_page_shift if seal_page_shift else 0, seal_code_limit=seal_code_limit, seal_n_code_slots=seal_n_code, seal_n_special_slots=seal_n_special, seal_platform=seal_platform, seal_raw_length=seal_length)
     seal_p = cursor + 44
     if seal_version >= 131328 and seal_p + 4 <= seal_end:
@@ -195,9 +220,13 @@ def seal_parse_code_directory(payload: bytes, cursor: int, seal_length: int) -> 
     if seal_version >= 131584 and seal_p + 4 <= seal_end:
         seal_team_off = seal_struct.unpack_from('>I', payload, seal_p)[0]
         seal_p += 4
-        if 0 < seal_team_off < seal_length:
+        if seal_team_off:
+            if seal_team_off < seal_header_end or seal_team_off >= seal_length:
+                raise EnvelopeFault('CodeDirectory team offset is outside its data area')
             seal_z = payload.find(b'\x00', cursor + seal_team_off, seal_end)
-            seal_cd.seal_team_id = payload[cursor + seal_team_off:seal_z if seal_z >= 0 else seal_end].decode('utf-8', 'replace')
+            if seal_z < 0:
+                raise EnvelopeFault('CodeDirectory team identifier is not terminated inside its declared length')
+            seal_cd.seal_team_id = payload[cursor + seal_team_off:seal_z].decode('utf-8', 'replace')
     if seal_version >= 131840 and seal_p + 12 <= seal_end:
         seal_p += 4
         seal_cd.seal_code_limit = seal_struct.unpack_from('>Q', payload, seal_p)[0] or seal_cd.seal_code_limit
@@ -220,24 +249,32 @@ def seal_parse_code_directory(payload: bytes, cursor: int, seal_length: int) -> 
 
 def read_envelope(payload: bytes, cursor: int, span: int) -> SigningEnvelope:
     """Parse the embedded signature SuperBlob at ``off`` (absolute file offset)."""
+    seal_need(payload, cursor, span, 'signature extent')
+    if span < 12:
+        raise EnvelopeFault('signature extent is shorter than a SuperBlob header')
     seal_need(payload, cursor, 12, 'signature SuperBlob header')
     seal_magic, seal_length, seal_count = seal_struct.unpack_from('>III', payload, cursor)
     if seal_magic not in (SEAL_CSMAGIC_EMBEDDED_SIGNATURE, SEAL_CSMAGIC_EMBEDDED_SIGNATURE_OLD):
         raise EnvelopeFault('not an embedded signature (magic 0x%08x)' % seal_magic)
     if seal_count > 64:
         raise EnvelopeFault('implausible blob count %d' % seal_count)
-    seal_need(payload, cursor, min(seal_length, span), 'signature SuperBlob')
+    if seal_length < 12 or seal_length > span:
+        raise EnvelopeFault('signature SuperBlob length exceeds its declared extent')
+    seal_index_end = 12 + seal_count * 8
+    if seal_index_end > seal_length:
+        raise EnvelopeFault('signature blob index exceeds the SuperBlob length')
     seal_sig = SigningEnvelope(seal_offset=cursor, seal_length=seal_length)
     for seal_i in range(seal_count):
         seal_ix = cursor + 12 + seal_i * 8
-        seal_need(payload, seal_ix, 8, 'blob index %d' % seal_i)
         seal_slot, seal_rel = seal_struct.unpack_from('>II', payload, seal_ix)
         seal_bo = cursor + seal_rel
-        seal_need(payload, seal_bo, 8, 'blob %d header' % seal_i)
+        if seal_rel < seal_index_end or seal_rel > seal_length - 8:
+            raise EnvelopeFault('blob %d header is outside the SuperBlob length' % seal_i)
         seal_bmagic, seal_blen = seal_struct.unpack_from('>II', payload, seal_bo)
         if seal_blen < 8:
             raise EnvelopeFault('blob %d declares length %d' % (seal_i, seal_blen))
-        seal_need(payload, seal_bo, seal_blen, 'blob %d body' % seal_i)
+        if seal_blen > seal_length - seal_rel:
+            raise EnvelopeFault('blob %d body exceeds the SuperBlob length' % seal_i)
         seal_sig.signing_frames.append(EnvelopeRecord(seal_slot=seal_slot, seal_slot_name=SEAL_SLOT_NAMES.get(seal_slot, 'slot-0x%x' % seal_slot), seal_offset=seal_rel, seal_magic=seal_bmagic, seal_length=seal_blen, content=payload[seal_bo + 8:seal_bo + seal_blen]))
         if seal_bmagic == SEAL_CSMAGIC_CODEDIRECTORY:
             seal_cd = seal_parse_code_directory(payload, seal_bo, seal_blen)

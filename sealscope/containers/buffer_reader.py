@@ -9,6 +9,9 @@ def seal_need(payload: bytes, cursor: int, span: int, seal_what: str) -> None:
         raise ContainerFault('%s needs bytes [0x%x, 0x%x) but the file is 0x%x long' % (seal_what, cursor, cursor + span, len(payload)))
 
 def seal_parse_slice(payload: bytes, cursor: int, span: int) -> ImageView:
+    seal_need(payload, cursor, span, 'Mach-O slice')
+    if span < 28:
+        raise ContainerFault('Mach-O slice is smaller than its header')
     seal_need(payload, cursor, 28, 'Mach-O header')
     seal_magic = seal_struct.unpack_from('<I', payload, cursor)[0]
     if seal_magic not in (SEAL_MH_MAGIC, SEAL_MH_MAGIC_64, SEAL_MH_CIGAM, SEAL_MH_CIGAM_64):
@@ -16,11 +19,15 @@ def seal_parse_slice(payload: bytes, cursor: int, span: int) -> ImageView:
     seal_endian = '>' if seal_magic in (SEAL_MH_CIGAM, SEAL_MH_CIGAM_64) else '<'
     seal_is64 = seal_magic in (SEAL_MH_MAGIC_64, SEAL_MH_CIGAM_64)
     seal_hdr_size = 32 if seal_is64 else 28
+    if span < seal_hdr_size:
+        raise ContainerFault('Mach-O slice is smaller than its header')
     seal_need(payload, cursor, seal_hdr_size, 'Mach-O header')
     seal_cputype, seal_cpusubtype, seal_filetype, seal_ncmds, seal_sizeofcmds, seal_flags = seal_struct.unpack_from(seal_endian + 'iiIIII', payload, cursor + 4)
     seal_sl = ImageView(seal_offset=cursor, span=span, seal_cputype=seal_cputype, seal_cpusubtype=seal_cpusubtype, seal_filetype=seal_filetype, seal_ncmds=seal_ncmds, seal_flags=seal_flags, seal_is64=seal_is64, seal_endian=seal_endian)
     if seal_ncmds > 10000:
         raise ContainerFault('implausible ncmds=%d' % seal_ncmds)
+    if seal_sizeofcmds > span - seal_hdr_size:
+        raise ContainerFault('load commands run past the declared Mach-O slice')
     seal_need(payload, cursor + seal_hdr_size, seal_sizeofcmds, 'load commands')
     seal_p = cursor + seal_hdr_size
     seal_limit = cursor + seal_hdr_size + seal_sizeofcmds
@@ -66,8 +73,12 @@ def seal_read_command(payload: bytes, seal_sl: ImageView, seal_cmd: int, seal_cm
             if 0 < seal_noff < seal_cmdsize:
                 seal_sl.seal_rpaths.append(seal_cstr(payload, seal_p + seal_noff, seal_p + seal_cmdsize))
     elif seal_cmd == SEAL_LC_CODE_SIGNATURE:
-        if seal_cmdsize >= 16:
-            seal_sl.seal_code_signature = seal_struct.unpack_from(seal_e_value + 'II', payload, seal_p + 8)
+        if seal_cmdsize < 16:
+            raise ContainerFault('code signature command is too small')
+        seal_dataoff, seal_datasize = seal_struct.unpack_from(seal_e_value + 'II', payload, seal_p + 8)
+        if seal_dataoff > seal_sl.span or seal_datasize > seal_sl.span - seal_dataoff:
+            raise ContainerFault('code signature data exceeds the declared Mach-O slice')
+        seal_sl.seal_code_signature = (seal_dataoff, seal_datasize)
     elif seal_cmd in (SEAL_LC_ENCRYPTION_INFO, SEAL_LC_ENCRYPTION_INFO_64):
         if seal_cmdsize >= 20:
             seal_cryptoff, seal_cryptsize, seal_cryptid = seal_struct.unpack_from(seal_e_value + 'III', payload, seal_p + 8)
@@ -99,7 +110,7 @@ def read_images(payload: bytes) -> seal_List[ImageView]:
                 seal_ct, seal_cs, seal_soff, seal_ssize, seal_al = seal_struct.unpack_from('>iiQQQ', payload, seal_o_value)
             else:
                 seal_ct, seal_cs, seal_soff, seal_ssize, seal_al = seal_struct.unpack_from('>iiIII', payload, seal_o_value)
-            seal_need(payload, seal_soff, min(seal_ssize, len(payload) - seal_soff), 'fat slice %d' % seal_i)
+            seal_need(payload, seal_soff, seal_ssize, 'fat slice %d' % seal_i)
             output.append(seal_parse_slice(payload, seal_soff, seal_ssize))
         if not output:
             raise ContainerFault('fat file declares no architectures')

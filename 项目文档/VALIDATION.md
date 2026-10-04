@@ -19,3 +19,20 @@ baseline evidence in guides/ is kept separate from this rewrite's current checks
 The 2026-10-01 recheck also compared 2,301 slices with native codesign (zero
 mismatches), 947 paired XML/DER permission documents (zero disagreements/errors),
 and 481 native permission outputs (zero differences). The 134 tests passed again.
+
+## 0.2.1 structural bounds revision
+
+The current public 0.2.0 source was used as the revision baseline. Twenty new
+synthetic tests cover valid declared extents and malformed fat slices, load commands,
+signature references, SuperBlob indexes and children, and CodeDirectory fields,
+including hash slots that would otherwise overlap version-header bytes. Positive
+fixtures retain valid 0x20500 and 0x20600 CodeDirectory headers.
+Nine malformed cases were demonstrated to pass through the baseline parser before
+the change. The revised source suite passes all 154 tests on Python 3.11, including
+the existing local `/usr/bin/otool` comparison test.
+
+The checks constrain parsing to declared bytes. They do not verify a CMS signature,
+certificate chain, page hashes or operating-system-granted entitlements. See the
+Apple XNU `CS_SuperBlob` and `CS_CodeDirectory` declarations and validation paths:
+https://github.com/apple-oss-distributions/xnu/blob/main/osfmk/kern/cs_blobs.h
+https://github.com/apple-oss-distributions/xnu/blob/main/bsd/kern/ubc_subr.c

@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "sealscope"
-version = "0.2.0"
+version = "0.2.1"
 description = "Structural audit of Mach-O signing metadata, declared entitlements and hardening settings. Does not verify cryptographic signatures or establish OS-granted permissions."
 readme = "项目文档/README.md"
 requires-python = ">=3.9"
