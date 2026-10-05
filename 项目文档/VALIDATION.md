@@ -36,3 +36,13 @@ certificate chain, page hashes or operating-system-granted entitlements. See the
 Apple XNU `CS_SuperBlob` and `CS_CodeDirectory` declarations and validation paths:
 https://github.com/apple-oss-distributions/xnu/blob/main/osfmk/kern/cs_blobs.h
 https://github.com/apple-oss-distributions/xnu/blob/main/bsd/kern/ubc_subr.c
+
+## 0.2.2 source-release synchronization
+
+The 0.2.2 change updates the runtime/package version and the repository's private
+vulnerability reporting link. The parser and policy implementation is unchanged
+from 0.2.1. On the staged source, 154 tests passed with Python 3.14. The staged
+build produced a wheel and source archive under `Build`, and an isolated consumer
+installed the wheel, read version 0.2.2 and author `dhtfish98`, and invoked the
+CLI help command. These local checks do not replace the GitHub Actions result
+for the published commit and tag.

@@ -16,5 +16,5 @@ grants. ``codesign -v`` checks whether the claim is true.
 """
 from .inspection import FileReview as FileReview, ImageReview as ImageReview, inspect_bundle as inspect_bundle, inspect_buffer as inspect_buffer, inspect_file as inspect_file
 from .observations import Observation as Observation, RiskLevel as RiskLevel
-__version__ = '0.2.1'
+__version__ = '0.2.2'
 __all__ = ['inspect_file', 'inspect_buffer', 'inspect_bundle', 'FileReview', 'ImageReview', 'Observation', 'RiskLevel', '__version__']

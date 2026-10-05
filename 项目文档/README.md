@@ -52,9 +52,11 @@ remain unchanged. See `guides/VERIFICATION.md` for earlier verification context,
 
 ## Current maintenance record
 
-The current package version is **0.2.1** and its maintenance name is **dhtfish98**. This package author entry records the present maintenance period. Earlier package/release metadata and historical source-lineage records may retain `bitfish886`; those records are preserved for their original publication periods.
+The current package version is **0.2.2** and its maintenance name is **dhtfish98**. This package author entry records the present maintenance period. Earlier package/release metadata and historical source-lineage records may retain `bitfish886`; those records are preserved for their original publication periods.
 
 This release rejects Mach-O slices, embedded signature blobs and CodeDirectory fields that claim bytes outside their declared ranges. The rejection is a structural check on local input; it does not establish signer trust, signature validity or OS-granted permissions. See `VALIDATION.md` for matching synthetic tests and build evidence.
+
+Version 0.2.2 also updates the private vulnerability reporting link to this repository and aligns the source release with the current documentation layout. Parser and policy code is unchanged from 0.2.1; the runtime version string is updated.
 
 Upstream attribution, third-party notices and licenses remain unchanged. The current implementation was revised on the public 0.2.0 baseline; an earlier unpublished package was not reused.
 
